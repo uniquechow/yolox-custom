@@ -18,11 +18,11 @@ class Exp(BaseExp):
 
         # ---------------- model config ---------------- #
         # detect classes number of model
-        self.num_classes = 80
+        self.num_classes = 3   # 3.修改类别数
         # factor of model depth
-        self.depth = 1.00
+        self.depth = 0.33
         # factor of model width
-        self.width = 1.00
+        self.width = 0.5
         # activation name. For example, if using "relu", then "silu" will be replaced to "relu".
         self.act = "silu"
 
@@ -88,10 +88,10 @@ class Exp(BaseExp):
         self.momentum = 0.9
         # log period in iter, for example,
         # if set to 1, user could see log every iteration.
-        self.print_interval = 10
+        self.print_interval = 1
         # eval period in epoch, for example,
         # if set to 1, model will be evaluate after every epoch.
-        self.eval_interval = 10
+        self.eval_interval = 1
         # save history checkpoint or not.
         # If set to False, yolox will only save latest and best ckpt.
         self.save_history_ckpt = True

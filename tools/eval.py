@@ -33,22 +33,10 @@ def make_parser():
         help="url used to set up distributed training",
     )
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
-    parser.add_argument(
-        "-d", "--devices", default=None, type=int, help="device for training"
-    )
-    parser.add_argument(
-        "--num_machines", default=1, type=int, help="num of node for training"
-    )
-    parser.add_argument(
-        "--machine_rank", default=0, type=int, help="node rank for multi-node training"
-    )
-    parser.add_argument(
-        "-f",
-        "--exp_file",
-        default=None,
-        type=str,
-        help="pls input your expriment description file",
-    )
+    parser.add_argument("-d", "--devices", default=None, type=int, help="device for training")
+    parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
+    parser.add_argument("--machine_rank", default=0, type=int, help="node rank for multi-node training")
+    parser.add_argument("-f","--exp_file",default=None,type=str,help="pls input your expriment description file",)
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
     parser.add_argument("--conf", default=None, type=float, help="test conf")
     parser.add_argument("--nms", default=None, type=float, help="test nms threshold")

@@ -29,21 +29,11 @@ def get_activation(name="silu", inplace=True):
 class BaseConv(nn.Module):
     """A Conv2d -> Batchnorm -> silu/leaky relu block"""
 
-    def __init__(
-        self, in_channels, out_channels, ksize, stride, groups=1, bias=False, act="silu"
-    ):
+    def __init__(self, in_channels, out_channels, ksize, stride, groups=1, bias=False, act="silu"):
         super().__init__()
         # same padding
         pad = (ksize - 1) // 2
-        self.conv = nn.Conv2d(
-            in_channels,
-            out_channels,
-            kernel_size=ksize,
-            stride=stride,
-            padding=pad,
-            groups=groups,
-            bias=bias,
-        )
+        self.conv = nn.Conv2d(in_channels,out_channels,kernel_size=ksize,stride=stride,padding=pad,groups=groups,bias=bias,)
         self.bn = nn.BatchNorm2d(out_channels)
         self.act = get_activation(act, inplace=True)
 
@@ -59,17 +49,8 @@ class DWConv(nn.Module):
 
     def __init__(self, in_channels, out_channels, ksize, stride=1, act="silu"):
         super().__init__()
-        self.dconv = BaseConv(
-            in_channels,
-            in_channels,
-            ksize=ksize,
-            stride=stride,
-            groups=in_channels,
-            act=act,
-        )
-        self.pconv = BaseConv(
-            in_channels, out_channels, ksize=1, stride=1, groups=1, act=act
-        )
+        self.dconv = BaseConv(in_channels, in_channels,ksize=ksize,stride=stride, groups=in_channels,act=act,)
+        self.pconv = BaseConv(in_channels, out_channels, ksize=1, stride=1, groups=1, act=act)
 
     def forward(self, x):
         x = self.dconv(x)
@@ -107,12 +88,8 @@ class ResLayer(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         mid_channels = in_channels // 2
-        self.layer1 = BaseConv(
-            in_channels, mid_channels, ksize=1, stride=1, act="lrelu"
-        )
-        self.layer2 = BaseConv(
-            mid_channels, in_channels, ksize=3, stride=1, act="lrelu"
-        )
+        self.layer1 = BaseConv(in_channels, mid_channels, ksize=1, stride=1, act="lrelu")
+        self.layer2 = BaseConv(mid_channels, in_channels, ksize=3, stride=1, act="lrelu")
 
     def forward(self, x):
         out = self.layer2(self.layer1(x))

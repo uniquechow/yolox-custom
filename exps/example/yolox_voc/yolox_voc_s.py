@@ -11,7 +11,7 @@ from yolox.exp import Exp as MyExp
 class Exp(MyExp):
     def __init__(self):
         super(Exp, self).__init__()
-        self.num_classes = 20
+        self.num_classes = 3   # 2.修改类别数
         self.depth = 0.33
         self.width = 0.50
         self.warmup_epochs = 1
@@ -25,41 +25,21 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
-        from yolox.data import (
-            VOCDetection,
-            TrainTransform,
-            YoloBatchSampler,
-            DataLoader,
-            InfiniteSampler,
-            MosaicDetection,
-            worker_init_reset_seed,
-        )
-        from yolox.utils import (
-            wait_for_the_master,
-            get_local_rank,
-        )
+        from yolox.data import (VOCDetection, TrainTransform, YoloBatchSampler, DataLoader, InfiniteSampler,MosaicDetection,worker_init_reset_seed,)
+        from yolox.utils import (wait_for_the_master, get_local_rank, )
         local_rank = get_local_rank()
 
         with wait_for_the_master(local_rank):
             dataset = VOCDetection(
-                data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-                image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
+                # data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
+                # image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
+                data_dir='/home/chow/0_project/1_transporter_ai0721/datasets/3class_train_AB',
+                image_sets=[('train')],
                 img_size=self.input_size,
-                preproc=TrainTransform(
-                    max_labels=50,
-                    flip_prob=self.flip_prob,
-                    hsv_prob=self.hsv_prob),
-                cache=cache_img,
-            )
+                preproc=TrainTransform(max_labels=100, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob),cache=cache_img, )
 
-        dataset = MosaicDetection(
-            dataset,
-            mosaic=not no_aug,
-            img_size=self.input_size,
-            preproc=TrainTransform(
-                max_labels=120,
-                flip_prob=self.flip_prob,
-                hsv_prob=self.hsv_prob),
+        dataset = MosaicDetection(dataset, mosaic=not no_aug, img_size=self.input_size,
+            preproc=TrainTransform( max_labels=120,flip_prob=self.flip_prob,hsv_prob=self.hsv_prob),
             degrees=self.degrees,
             translate=self.translate,
             mosaic_scale=self.mosaic_scale,
@@ -68,7 +48,7 @@ class Exp(MyExp):
             enable_mixup=self.enable_mixup,
             mosaic_prob=self.mosaic_prob,
             mixup_prob=self.mixup_prob,
-        )
+                                  )
 
         self.dataset = dataset
 
@@ -79,12 +59,7 @@ class Exp(MyExp):
             len(self.dataset), seed=self.seed if self.seed else 0
         )
 
-        batch_sampler = YoloBatchSampler(
-            sampler=sampler,
-            batch_size=batch_size,
-            drop_last=False,
-            mosaic=not no_aug,
-        )
+        batch_sampler = YoloBatchSampler(sampler=sampler, batch_size=batch_size, drop_last=False, mosaic=not no_aug,)
 
         dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
         dataloader_kwargs["batch_sampler"] = batch_sampler
@@ -100,8 +75,10 @@ class Exp(MyExp):
         from yolox.data import VOCDetection, ValTransform
 
         valdataset = VOCDetection(
-            data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-            image_sets=[('2007', 'test')],
+            # data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
+            # image_sets=[('2007', 'test')],
+            data_dir='/home/chow/0_project/1_transporter_ai0721/datasets/3class_train_AB',
+            image_sets=[('val')],
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
         )
@@ -114,11 +91,8 @@ class Exp(MyExp):
         else:
             sampler = torch.utils.data.SequentialSampler(valdataset)
 
-        dataloader_kwargs = {
-            "num_workers": self.data_num_workers,
-            "pin_memory": True,
-            "sampler": sampler,
-        }
+
+        dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True, "sampler": sampler,}
         dataloader_kwargs["batch_size"] = batch_size
         val_loader = torch.utils.data.DataLoader(valdataset, **dataloader_kwargs)
 

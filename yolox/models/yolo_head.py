@@ -38,6 +38,7 @@ class YOLOXHead(nn.Module):
 
         self.cls_convs = nn.ModuleList()
         self.reg_convs = nn.ModuleList()
+
         self.cls_preds = nn.ModuleList()
         self.reg_preds = nn.ModuleList()
         self.obj_preds = nn.ModuleList()
@@ -45,81 +46,24 @@ class YOLOXHead(nn.Module):
         Conv = DWConv if depthwise else BaseConv
 
         for i in range(len(in_channels)):
-            self.stems.append(
-                BaseConv(
-                    in_channels=int(in_channels[i] * width),
-                    out_channels=int(256 * width),
-                    ksize=1,
-                    stride=1,
-                    act=act,
-                )
-            )
+            self.stems.append( BaseConv(int(in_channels[i] * width), int(256 * width),ksize=1, stride=1, act=act,) )
+
             self.cls_convs.append(
                 nn.Sequential(
-                    *[
-                        Conv(
-                            in_channels=int(256 * width),
-                            out_channels=int(256 * width),
-                            ksize=3,
-                            stride=1,
-                            act=act,
-                        ),
-                        Conv(
-                            in_channels=int(256 * width),
-                            out_channels=int(256 * width),
-                            ksize=3,
-                            stride=1,
-                            act=act,
-                        ),
-                    ]
-                )
-            )
+                     *[Conv(int(256 * width), int(256 * width), ksize=3, stride=1, act=act,),
+                        Conv(int(256 * width), int(256 * width), ksize=3, stride=1, act=act,),
+                    ]))
+
             self.reg_convs.append(
-                nn.Sequential(
-                    *[
-                        Conv(
-                            in_channels=int(256 * width),
-                            out_channels=int(256 * width),
-                            ksize=3,
-                            stride=1,
-                            act=act,
-                        ),
-                        Conv(
-                            in_channels=int(256 * width),
-                            out_channels=int(256 * width),
-                            ksize=3,
-                            stride=1,
-                            act=act,
-                        ),
-                    ]
-                )
+                nn.Sequential(*[Conv(int(256 * width),int(256 * width),ksize=3, stride=1, act=act,),
+                      Conv(int(256 * width), int(256 * width),ksize=3, stride=1, act=act,) ,])
             )
-            self.cls_preds.append(
-                nn.Conv2d(
-                    in_channels=int(256 * width),
-                    out_channels=self.n_anchors * self.num_classes,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                )
-            )
-            self.reg_preds.append(
-                nn.Conv2d(
-                    in_channels=int(256 * width),
-                    out_channels=4,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                )
-            )
-            self.obj_preds.append(
-                nn.Conv2d(
-                    in_channels=int(256 * width),
-                    out_channels=self.n_anchors * 1,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                )
+
+            self.cls_preds.append( nn.Conv2d(int(256 * width), self.n_anchors * self.num_classes, kernel_size=1, stride=1, padding=0,))
+
+            self.reg_preds.append( nn.Conv2d(int(256 * width), 4, kernel_size=1, stride=1, padding=0,) )
+
+            self.obj_preds.append(nn.Conv2d(int(256 * width),self.n_anchors * 1, kernel_size=1,stride=1,padding=0,)
             )
 
         self.use_l1 = False
