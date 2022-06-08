@@ -2,6 +2,8 @@
 # -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
+# file contains Darknet and CSPDarknet
+
 from torch import nn
 
 from .network_blocks import BaseConv, CSPLayer, DWConv, Focus, ResLayer, SPPBottleneck
@@ -11,13 +13,7 @@ class Darknet(nn.Module):
     # number of blocks from dark2 to dark5.
     depth2blocks = {21: [1, 2, 2, 1], 53: [2, 8, 8, 4]}
 
-    def __init__(
-        self,
-        depth,
-        in_channels=3,
-        stem_out_channels=32,
-        out_features=("dark3", "dark4", "dark5"),
-    ):
+    def __init__(self, depth, in_channels=3, stem_out_channels=32, out_features=("dark3", "dark4", "dark5"),):
         """
         Args:
             depth (int): depth of darknet used in model, usually use [21, 53] for this param.
@@ -33,6 +29,7 @@ class Darknet(nn.Module):
             BaseConv(in_channels, stem_out_channels, ksize=3, stride=1, act="lrelu"),
             *self.make_group_layer(stem_out_channels, num_blocks=1, stride=2),
         )
+
         in_channels = stem_out_channels * 2  # 64
 
         num_blocks = Darknet.depth2blocks[depth]
@@ -83,6 +80,7 @@ class Darknet(nn.Module):
         outputs = {}
         x = self.stem(x)
         outputs["stem"] = x
+
         x = self.dark2(x)
         outputs["dark2"] = x
         x = self.dark3(x)
@@ -129,39 +127,20 @@ class CSPDarknet(nn.Module):
         # dark3
         self.dark3 = nn.Sequential(
             Conv(base_channels * 2, base_channels * 4, 3, 2, act=act),
-            CSPLayer(
-                base_channels * 4,
-                base_channels * 4,
-                n=base_depth * 3,
-                depthwise=depthwise,
-                act=act,
-            ),
+            CSPLayer(base_channels * 4, base_channels * 4, n=base_depth * 3, depthwise=depthwise,act=act,),
         )
 
         # dark4
         self.dark4 = nn.Sequential(
             Conv(base_channels * 4, base_channels * 8, 3, 2, act=act),
-            CSPLayer(
-                base_channels * 8,
-                base_channels * 8,
-                n=base_depth * 3,
-                depthwise=depthwise,
-                act=act,
-            ),
+            CSPLayer(base_channels * 8, base_channels * 8, n=base_depth * 3, depthwise=depthwise, act=act,),
         )
 
         # dark5
         self.dark5 = nn.Sequential(
             Conv(base_channels * 8, base_channels * 16, 3, 2, act=act),
             SPPBottleneck(base_channels * 16, base_channels * 16, activation=act),
-            CSPLayer(
-                base_channels * 16,
-                base_channels * 16,
-                n=base_depth,
-                shortcut=False,
-                depthwise=depthwise,
-                act=act,
-            ),
+            CSPLayer(base_channels * 16, base_channels * 16, n=base_depth, shortcut=False, depthwise=depthwise, act=act,),
         )
 
     def forward(self, x):
@@ -177,3 +156,5 @@ class CSPDarknet(nn.Module):
         x = self.dark5(x)
         outputs["dark5"] = x
         return {k: v for k, v in outputs.items() if k in self.out_features}
+
+

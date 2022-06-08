@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
-
 import os
 import random
 
@@ -10,15 +9,16 @@ import torch.distributed as dist
 import torch.nn as nn
 
 from .base_exp import BaseExp
-
+from yolox.data import get_yolox_datadir
+from pathlib import Path
+from datasets.datacfg import nc
 
 class Exp(BaseExp):
     def __init__(self):
         super().__init__()
-
         # ---------------- model config ---------------- #
         # detect classes number of model
-        self.num_classes = 3   # 3.修改类别数
+        self.num_classes = nc  # 3.修改类别数
         # factor of model depth
         self.depth = 0.33
         # factor of model width
@@ -29,8 +29,8 @@ class Exp(BaseExp):
         # ---------------- dataloader config ---------------- #
         # set worker to 4 for shorter dataloader init time
         # If your training process cost many memory, reduce this value.
-        self.data_num_workers = 4
-        self.input_size = (640, 640)  # (height, width)
+        self.data_num_workers = 8
+        self.input_size = (480, 480)  # (height, width)
         # Actual multiscale ranges: [640 - 5 * 32, 640 + 5 * 32].
         # To disable multiscale training, set the value to 0.
         self.multiscale_range = 5
@@ -107,7 +107,7 @@ class Exp(BaseExp):
         # nms threshold
         self.nmsthre = 0.65
 
-    def get_model(self):
+    def get_model(self): # 构建模型
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
         def init_yolo(M):
@@ -239,7 +239,7 @@ class Exp(BaseExp):
                 lr = self.warmup_lr
             else:
                 lr = self.basic_lr_per_img * batch_size
-
+            # 将参数进行分组优化
             pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
 
             for k, v in self.model.named_modules():

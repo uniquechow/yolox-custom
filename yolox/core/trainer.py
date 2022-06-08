@@ -71,6 +71,7 @@ class Trainer:
 
     def train(self):
         self.before_train()
+
         try:
             self.train_in_epoch()
         except Exception:
@@ -100,8 +101,14 @@ class Trainer:
         inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
 
-        with torch.cuda.amp.autocast(enabled=self.amp_training):
+        with torch.cuda.amp.autocast(enabled=self.amp_training): # 自动混合精度
             outputs = self.model(inps, targets)
+            test1 = 1
+            # outputs:{'total_loss': tensor(10.1307, device='cuda:0', grad_fn=<AddBackward0>),
+            #          'iou_loss': tensor(1.4805, device='cuda:0', grad_fn=<MulBackward0>),
+            #           'l1_loss': 0.0,
+            #           'conf_loss': tensor(4.0320, device='cuda:0', grad_fn=<DivBackward0>),
+            #            'cls_loss': tensor(4.6183, device='cuda:0', grad_fn=<DivBackward0>), 'num_fg': 7.5777777777777775}
 
         loss = outputs["total_loss"]
 
@@ -131,10 +138,8 @@ class Trainer:
 
         # model related init
         torch.cuda.set_device(self.local_rank)
-        model = self.exp.get_model()
-        logger.info(
-            "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
-        )
+        model = self.exp.get_model()  # 搭建模型
+        logger.info("Model Summary: {}".format(get_model_info(model, self.exp.test_size)))
         model.to(self.device)
 
         # solver related init
@@ -152,25 +157,29 @@ class Trainer:
             cache_img=self.args.cache,
         )
         logger.info("init prefetcher, this might take one minute or less...")
-        self.prefetcher = DataPrefetcher(self.train_loader)
+        self.prefetcher = DataPrefetcher(self.train_loader)  # 使用nvidia apex提高dataloader效率
         # max_iter means iters per epoch
         self.max_iter = len(self.train_loader)
 
         self.lr_scheduler = self.exp.get_lr_scheduler(
             self.exp.basic_lr_per_img * self.args.batch_size, self.max_iter
         )
-        if self.args.occupy:
+        if self.args.occupy: # 默认false
             occupy_mem(self.local_rank)
 
-        if self.is_distributed:
+        if self.is_distributed: # 是否使用DDP并行计算，默认false
             model = DDP(model, device_ids=[self.local_rank], broadcast_buffers=False)
 
-        if self.use_model_ema:
+        #其原理是：对模型额外维护一份指数移动平均模型 ema_model，然后在每次迭代模型参数更新后，
+        #利用 model 中的参数和 ema_model 计算更新后的 ema_model，评估阶段使用的是 ema_model。
+        if self.use_model_ema: # 默认True， 为模型创建EMA指数滑动平均，提高模型鲁棒性
+
             self.ema_model = ModelEMA(model, 0.9998)
             self.ema_model.updates = self.max_iter * self.start_epoch
 
         self.model = model
 
+        # intit evaluator, val dataset path
         self.evaluator = self.exp.get_evaluator(
             batch_size=self.args.batch_size, is_distributed=self.is_distributed
         )
@@ -355,12 +364,7 @@ class Trainer:
                 "optimizer": self.optimizer.state_dict(),
                 "best_ap": self.best_ap,
             }
-            save_checkpoint(
-                ckpt_state,
-                update_best_ckpt,
-                self.file_name,
-                ckpt_name,
-            )
+            save_checkpoint(ckpt_state, update_best_ckpt, self.file_name, ckpt_name,)
 
             if self.args.logger == "wandb":
                 self.wandb_logger.save_checkpoint(self.file_name, ckpt_name, update_best_ckpt)

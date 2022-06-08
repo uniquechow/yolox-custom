@@ -6,14 +6,7 @@ from torch import nn
 from torch.hub import load_state_dict_from_url
 
 __all__ = [
-    "create_yolox_model",
-    "yolox_nano",
-    "yolox_tiny",
-    "yolox_s",
-    "yolox_m",
-    "yolox_l",
-    "yolox_x",
-    "yolov3",
+    "create_yolox_model", "yolox_nano","yolox_tiny", "yolox_s", "yolox_m", "yolox_l", "yolox_x", "yolov3",
 ]
 
 _CKPT_ROOT_URL = "https://github.com/Megvii-BaseDetection/YOLOX/releases/download"
@@ -28,9 +21,7 @@ _CKPT_FULL_PATH = {
 }
 
 
-def create_yolox_model(
-    name: str, pretrained: bool = True, num_classes: int = 80, device=None
-) -> nn.Module:
+def create_yolox_model(name: str, pretrained: bool = True, num_classes: int = 80, device=None) -> nn.Module:
     """creates and loads a YOLOX model
 
     Args:

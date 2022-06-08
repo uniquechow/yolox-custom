@@ -8,21 +8,19 @@ import torch.nn as nn
 from .darknet import CSPDarknet
 from .network_blocks import BaseConv, CSPLayer, DWConv
 
+#----==================== 使用CSPDarknet作为backbone
 
 class YOLOPAFPN(nn.Module):
     """
     YOLOv3 model. Darknet 53 is the default backbone of this model.
     """
-
-    def __init__(
-        self,
-        depth=1.0,
-        width=1.0,
+    def __init__(self,
+        depth=1.0, width=1.0,
         in_features=("dark3", "dark4", "dark5"),
         in_channels=[256, 512, 1024],
-        depthwise=False,
-        act="silu",
+        depthwise=False, act="silu",
     ):
+
         super().__init__()
         self.backbone = CSPDarknet(depth, width, depthwise=depthwise, act=act)
         self.in_features = in_features
@@ -62,11 +60,11 @@ class YOLOPAFPN(nn.Module):
         Returns:
             Tuple[Tensor]: FPN feature.
         """
-
         #  backbone
         out_features = self.backbone(input)
+
         features = [out_features[f] for f in self.in_features]
-        [x2, x1, x0] = features
+        [x2, x1, x0] = features   # x0为SPP后，经过2个CBL后的输出
 
         fpn_out0 = self.lateral_conv0(x0)  # 1024->512/32
         f_out0 = self.upsample(fpn_out0)  # 512/16

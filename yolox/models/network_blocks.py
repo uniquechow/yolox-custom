@@ -5,15 +5,6 @@
 import torch
 import torch.nn as nn
 
-
-class SiLU(nn.Module):
-    """export-friendly version of nn.SiLU()"""
-
-    @staticmethod
-    def forward(x):
-        return x * torch.sigmoid(x)
-
-
 def get_activation(name="silu", inplace=True):
     if name == "silu":
         module = nn.SiLU(inplace=inplace)
@@ -26,6 +17,12 @@ def get_activation(name="silu", inplace=True):
     return module
 
 
+class SiLU(nn.Module):
+    """export-friendly version of nn.SiLU()"""
+    @staticmethod
+    def forward(x):
+        return x * torch.sigmoid(x)
+
 class BaseConv(nn.Module):
     """A Conv2d -> Batchnorm -> silu/leaky relu block"""
 
@@ -33,7 +30,7 @@ class BaseConv(nn.Module):
         super().__init__()
         # same padding
         pad = (ksize - 1) // 2
-        self.conv = nn.Conv2d(in_channels,out_channels,kernel_size=ksize,stride=stride,padding=pad,groups=groups,bias=bias,)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=ksize,stride=stride, padding=pad, groups=groups,bias=bias,)
         self.bn = nn.BatchNorm2d(out_channels)
         self.act = get_activation(act, inplace=True)
 
@@ -59,15 +56,7 @@ class DWConv(nn.Module):
 
 class Bottleneck(nn.Module):
     # Standard bottleneck
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        shortcut=True,
-        expansion=0.5,
-        depthwise=False,
-        act="silu",
-    ):
+    def __init__(self, in_channels, out_channels, shortcut=True, expansion=0.5, depthwise=False, act="silu",):
         super().__init__()
         hidden_channels = int(out_channels * expansion)
         Conv = DWConv if depthwise else BaseConv
@@ -99,17 +88,12 @@ class ResLayer(nn.Module):
 class SPPBottleneck(nn.Module):
     """Spatial pyramid pooling layer used in YOLOv3-SPP"""
 
-    def __init__(
-        self, in_channels, out_channels, kernel_sizes=(5, 9, 13), activation="silu"
-    ):
+    def __init__(self, in_channels, out_channels, kernel_sizes=(5, 9, 13), activation="silu"):
         super().__init__()
         hidden_channels = in_channels // 2
         self.conv1 = BaseConv(in_channels, hidden_channels, 1, stride=1, act=activation)
         self.m = nn.ModuleList(
-            [
-                nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
-                for ks in kernel_sizes
-            ]
+            [nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2) for ks in kernel_sizes]
         )
         conv2_channels = hidden_channels * (len(kernel_sizes) + 1)
         self.conv2 = BaseConv(conv2_channels, out_channels, 1, stride=1, act=activation)
@@ -124,16 +108,7 @@ class SPPBottleneck(nn.Module):
 class CSPLayer(nn.Module):
     """C3 in yolov5, CSP Bottleneck with 3 convolutions"""
 
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        n=1,
-        shortcut=True,
-        expansion=0.5,
-        depthwise=False,
-        act="silu",
-    ):
+    def __init__(self, in_channels, out_channels, n=1, shortcut=True, expansion=0.5, depthwise=False, act="silu",):
         """
         Args:
             in_channels (int): input channels.
@@ -146,12 +121,7 @@ class CSPLayer(nn.Module):
         self.conv1 = BaseConv(in_channels, hidden_channels, 1, stride=1, act=act)
         self.conv2 = BaseConv(in_channels, hidden_channels, 1, stride=1, act=act)
         self.conv3 = BaseConv(2 * hidden_channels, out_channels, 1, stride=1, act=act)
-        module_list = [
-            Bottleneck(
-                hidden_channels, hidden_channels, shortcut, 1.0, depthwise, act=act
-            )
-            for _ in range(n)
-        ]
+        module_list = [Bottleneck(hidden_channels, hidden_channels, shortcut, 1.0, depthwise, act=act) for _ in range(n)]
         self.m = nn.Sequential(*module_list)
 
     def forward(self, x):
@@ -175,13 +145,5 @@ class Focus(nn.Module):
         patch_top_right = x[..., ::2, 1::2]
         patch_bot_left = x[..., 1::2, ::2]
         patch_bot_right = x[..., 1::2, 1::2]
-        x = torch.cat(
-            (
-                patch_top_left,
-                patch_bot_left,
-                patch_top_right,
-                patch_bot_right,
-            ),
-            dim=1,
-        )
+        x = torch.cat((patch_top_left, patch_bot_left, patch_top_right,patch_bot_right,), dim=1,)
         return self.conv(x)

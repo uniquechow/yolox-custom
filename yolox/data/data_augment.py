@@ -43,13 +43,7 @@ def get_aug_params(value, center=0):
         )
 
 
-def get_affine_matrix(
-    target_size,
-    degrees=10,
-    translate=0.1,
-    scales=0.1,
-    shear=10,
-):
+def get_affine_matrix(target_size, degrees=10, translate=0.1, scales=0.1, shear=10,):
     twidth, theight = target_size
 
     # Rotation and Scale

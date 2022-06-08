@@ -21,22 +21,23 @@ def make_parser():
     parser = argparse.ArgumentParser("YOLOX train parser")
     #===== 常用参数======#
     parser.add_argument("-b", "--batch-size", default=2, type=int, help="batch size")
-    parser.add_argument("-c", "--ckpt", default='yolox_s.pth', type=str, help="checkpoint file")
-    parser.add_argument("-d", "--devices", default=0, type=int, help="device for training")
+    parser.add_argument("-c", "--ckpt", default='yolox_s.pth', type=str, help="checkpoint file") # 预训练模型
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
-    parser.add_argument("-f", "--exp_file", default='exps/example/yolox_voc/yolox_voc_s.py', type=str,help="plz input your experiment description file",)
+    parser.add_argument("-d", "--devices", default=0, type=int, help="device for training")
+    parser.add_argument("--resume", default=False, action="store_true", help="resume training")
+    parser.add_argument("-f", "--exp_file", default='exps/example/yolox_voc/yolox_voc_s.py', type=str, help="plz input your experiment description file", )
 
-    # distributed
+    # 使用的模型结构，example使用为voc dataloader and voc evaluator
+
+    # distributed, 以下不常用
     parser.add_argument("--dist-backend", default="nccl", type=str, help="distributed backend")
     parser.add_argument("--dist-url", default=None, type=str,help="url used to set up distributed training",)
-
-    parser.add_argument("--resume", default=False, action="store_true", help="resume training")
     parser.add_argument("-e", "--start_epoch", default=None, type=int, help="resume training start epoch",)
     parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
     parser.add_argument("--machine_rank", default=0, type=int, help="node rank for multi-node training")
-    parser.add_argument("--fp16", dest="fp16",default=False,action="store_true",help="Adopting mix precision training.",)
-    parser.add_argument("--cache", dest="cache",default=False,action="store_true",help="Caching imgs to RAM for fast training.",)
+    parser.add_argument("--fp16", dest="fp16", default=False,action="store_true",help="Adopting mix precision training.",)
+    parser.add_argument("--cache", dest="cache", default=False,action="store_true",help="Caching imgs to RAM for fast training.",)
     parser.add_argument("-o", "--occupy", dest="occupy", default=False, action="store_true", help="occupy GPU memory first for training.",)
     parser.add_argument("-l", "--logger", type=str, help="Logger to be used for metrics", default="tensorboard")
     parser.add_argument("opts",help="Modify config options using the command-line",default=None,nargs=argparse.REMAINDER, )
@@ -76,5 +77,4 @@ if __name__ == "__main__":
     assert num_gpu <= get_num_devices()
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
-    launch(main, num_gpu, args.num_machines, args.machine_rank,
-        backend=args.dist_backend, dist_url=dist_url, args=(exp, args),)
+    launch(main, num_gpu, args.num_machines, args.machine_rank, backend=args.dist_backend, dist_url=dist_url, args=(exp, args),)

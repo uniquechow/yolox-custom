@@ -36,16 +36,8 @@ def _find_free_port():
     return port
 
 
-def launch(
-    main_func,
-    num_gpus_per_machine,
-    num_machines=1,
-    machine_rank=0,
-    backend="nccl",
-    dist_url=None,
-    args=(),
-    timeout=DEFAULT_TIMEOUT,
-):
+def launch(main_func, num_gpus_per_machine, num_machines=1, machine_rank=0,
+    backend="nccl", dist_url=None, args=(), timeout=DEFAULT_TIMEOUT,):
     """
     Args:
         main_func: a function that will be called by `main_func(*args)`
@@ -62,9 +54,7 @@ def launch(
         # TODO prctl in spawned processes
 
         if dist_url == "auto":
-            assert (
-                num_machines == 1
-            ), "dist_url=auto cannot work with distributed training."
+            assert (num_machines == 1), "dist_url=auto cannot work with distributed training."
             port = _find_free_port()
             dist_url = f"tcp://127.0.0.1:{port}"
 
@@ -82,8 +72,7 @@ def launch(
         mp.start_processes(
             _distributed_worker,
             nprocs=num_gpus_per_machine,
-            args=(
-                main_func,
+            args=( main_func,
                 world_size,
                 num_gpus_per_machine,
                 machine_rank,
@@ -98,30 +87,14 @@ def launch(
         main_func(*args)
 
 
-def _distributed_worker(
-    local_rank,
-    main_func,
-    world_size,
-    num_gpus_per_machine,
-    machine_rank,
-    backend,
-    dist_url,
-    args,
-    timeout=DEFAULT_TIMEOUT,
-):
-    assert (
-        torch.cuda.is_available()
-    ), "cuda is not available. Please check your installation."
+def _distributed_worker(local_rank, main_func, world_size, num_gpus_per_machine, machine_rank,backend,
+    dist_url, args, timeout=DEFAULT_TIMEOUT,):
+    assert (torch.cuda.is_available()), "cuda is not available. Please check your installation."
+
     global_rank = machine_rank * num_gpus_per_machine + local_rank
     logger.info("Rank {} initialization finished.".format(global_rank))
     try:
-        dist.init_process_group(
-            backend=backend,
-            init_method=dist_url,
-            world_size=world_size,
-            rank=global_rank,
-            timeout=timeout,
-        )
+        dist.init_process_group(backend=backend,init_method=dist_url,world_size=world_size,rank=global_rank,timeout=timeout,)
     except Exception:
         logger.error("Process group URL: {}".format(dist_url))
         raise

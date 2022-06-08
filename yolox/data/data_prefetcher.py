@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+# 用于加快pytorch数据加载
 import torch
 
 

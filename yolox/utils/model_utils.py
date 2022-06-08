@@ -19,7 +19,7 @@ __all__ = [
     "adjust_status",
 ]
 
-
+# 用于计算模型的参数量和计算量
 def get_model_info(model: nn.Module, tsize: Sequence[int]) -> str:
     stride = 64
     img = torch.zeros((1, 3, stride, stride), device=next(model.parameters()).device)

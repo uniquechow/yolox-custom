@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+# 抽样，批取样器，将从另一个取样器生成（马赛克，索引）元组的小批
 import itertools
 from typing import Optional
 

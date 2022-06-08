@@ -20,7 +20,7 @@ from yolox.evaluators.voc_eval import voc_eval
 from .datasets_wrapper import Dataset
 from .voc_classes import VOC_CLASSES
 
-
+# 用于处理Annotations文件
 class AnnotationTransform(object):
 
     """Transforms a VOC annotation into a Tensor of bbox coords and label index
@@ -58,7 +58,7 @@ class AnnotationTransform(object):
                 difficult = False
             if not self.keep_difficult and difficult:
                 continue
-            name = obj.find("name").text.strip()
+            name = obj.find("name").text.strip() # 找到.xml文件中类别名
             bbox = obj.find("bndbox")
 
             pts = ["xmin", "ymin", "xmax", "ymax"]
@@ -192,12 +192,12 @@ class VOCDetection(Dataset):
         target = ET.parse(self._annopath % img_id).getroot()
 
         assert self.target_transform is not None
-        res, img_info = self.target_transform(target)
-        height, width = img_info
+        res, img_info = self.target_transform(target) # 得到图像中目标的数量、坐标点、类别； shape:(21,5) -> (obj_num, x1+y1+x2+x2+cls)
+        height, width = img_info  # 原图像高度，宽度
 
-        r = min(self.img_size[0] / height, self.img_size[1] / width)
+        r = min(self.img_size[0] / height, self.img_size[1] / width) # resize率
         res[:, :4] *= r
-        resized_info = (int(height * r), int(width * r))
+        resized_info = (int(height * r), int(width * r))  # resize后的图像大小，如480
 
         return (res, img_info, resized_info)
 
