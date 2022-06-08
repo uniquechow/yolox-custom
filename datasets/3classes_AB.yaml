@@ -1,0 +1,16 @@
+
+# the yaml is for online training after pretrained on 2 classes models
+# the path is for nosplit_data for 3 classes
+# it can use with doc, online_2classes_pre.yaml
+#  Attention !!!!!  Before use , please check the model's nc ;
+# yamlname : online_3classes.yaml
+
+# dataset_dircontent: Annotations , JPEGImages, ImageSets,  train.txt, val.txt, test.txt
+
+
+datasets_dir: /home/chow/0_project/1_transporter_ai0721/datasets/3class_train_AB  # parent_dir for train and val
+test:  # test images (optional)
+
+# Classes
+nc: 3  # number of classes
+names: ['basket','orange','fullbasket']  # class names, with end ,
